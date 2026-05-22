@@ -5,15 +5,30 @@ export default async function handler(req, res) {
 
   try {
     const { prompt, cameraMotion, duration, aspectRatio } = req.body;
+    const SEEDANCE_KEY = process.env.SEEDANCE_API_KEY;
 
-    // Aguarda 2 segundos para a barra de progresso encher lindamente no seu site
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Conectando com a API real do Seedance
+    const seedanceResponse = await fetch('https://api.seedance.io/v2/video/generate', { 
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SEEDANCE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        motion: cameraMotion,
+        duration: parseInt(duration),
+        aspect_ratio: aspectRatio
+      })
+    });
 
-    // Retorna uma resposta com um vídeo público do Google que nunca falha
+    const seedanceData = await seedanceResponse.json();
+
+    // Devolve a URL real que o Seedance gerou para o seu site
     return res.status(200).json({
       success: true,
       promptUsado: prompt,
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+      videoUrl: seedanceData.video_url || seedanceData.url 
     });
 
   } catch (error) {
