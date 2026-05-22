@@ -59,7 +59,7 @@
         <h1 class="font-display text-xl md:text-2xl font-bold text-white flex items-center gap-1.5">
           Seedance Video <span class="text-violet-400 font-mono text-xs bg-violet-950/50 border border-violet-800/30 px-1.5 py-0.5 rounded">FAST</span>
         </h1>
-        <p class="text-xs text-zinc-400 mt-0.5">Geração de vídeos assíncrona conectada ao OpenRouter</p>
+        <p class="text-xs text-zinc-400 mt-0.5">Geração de vídeos assíncrona com suporte a download direto</p>
       </div>
     </div>
   </header>
@@ -79,7 +79,7 @@
         
         <div class="space-y-2">
           <label class="text-xs font-semibold text-zinc-300">Prompt Cinematográfico</label>
-          <textarea id="prompt-input" rows="4" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none focus:border-violet-500/60" placeholder="Insira o seu comando aqui...">Um único lutador executando uma sequência de combate intensa, câmera afastando lentamente, atmosfera cinematográfica de ficção científica...</textarea>
+          <textarea id="prompt-input" rows="4" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none focus:border-violet-500/60" placeholder="Insira o seu comando aqui...">Um único lutador executando uma sequência de combate intensa, sem duplas, câmera afastando lentamente, atmosfera cinematográfica de ficção científica...</textarea>
         </div>
       </div>
 
@@ -116,6 +116,14 @@
             <video id="player-mock-frame" class="w-full h-full object-contain" controls autoplay loop muted playsinline></video>
           </div>
         </div>
+
+        <div id="preview-footer-state" class="hidden p-4 bg-black/60 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <span class="text-xs text-zinc-400 font-mono">Processamento concluído com sucesso</span>
+          <a id="download-action-btn" href="#" target="_blank" download="video-seedance.mp4" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition transform hover:scale-[1.01] shadow-lg shadow-violet-950/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Baixar Arquivo MP4
+          </a>
+        </div>
       </div>
 
       <div class="bg-brand-card border border-brand-border p-5 rounded-2xl flex flex-col gap-4 shadow-xl">
@@ -140,15 +148,16 @@
       isGenerating = true;
       document.getElementById('preview-empty-state').classList.add('hidden');
       document.getElementById('preview-player-state').classList.add('hidden');
+      document.getElementById('preview-footer-state').classList.add('hidden'); // Oculta botão do vídeo anterior
       document.getElementById('preview-loading-state').classList.remove('hidden');
 
       let progress = 0;
       document.getElementById('generation-progress-bar').style.width = `10%`;
       document.getElementById('load-percentage-console').innerText = `10%`;
-      document.getElementById('load-label-console').innerText = "Enviando pedido de vídeo para a API...";
+      document.getElementById('load-label-console').innerText = "Enviando payload para o OpenRouter...";
 
       try {
-        // Passo 1: Solicitar o vídeo ao OpenRouter
+        // Passo 1: Disparar pedido assíncrono de vídeo
         const response = await fetch('https://openrouter.ai/api/v1/videos', {
           method: 'POST',
           headers: {
@@ -172,29 +181,26 @@
         const jobId = data.id;
         const pollingUrl = data.polling_url || `https://openrouter.ai/api/v1/videos/${jobId}`;
 
-        document.getElementById('load-label-console').innerText = "Na fila de renderização (Verificando status...)";
+        document.getElementById('load-label-console').innerText = "Na fila de difusão (Aguardando blocos...)";
         document.getElementById('generation-progress-bar').style.width = `40%`;
         document.getElementById('load-percentage-console').innerText = `40%`;
 
         let videoUrl = null;
         let isCompleted = false;
         
-        // Simular um progresso contínuo enquanto espera a IA terminar
         const progressInterval = setInterval(() => {
           if (progress < 90) progress += 2;
           document.getElementById('generation-progress-bar').style.width = `${progress}%`;
           document.getElementById('load-percentage-console').innerText = `${progress}%`;
-        }, 3000);
+        }, 2500);
 
-        // Passo 2: Polling assíncrono (Perguntar à API se já terminou a cada 5 segundos)
+        // Passo 2: Polling de checagem de status
         while (!isCompleted) {
-          await new Promise(r => setTimeout(r, 5000));
+          await new Promise(r => setTimeout(r, 4000));
           
           const pollResponse = await fetch(pollingUrl, {
             method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`
-            }
+            headers: { 'Authorization': `Bearer ${apiKey}` }
           });
           
           const pollData = await pollResponse.json();
@@ -205,48 +211,60 @@
             document.getElementById('generation-progress-bar').style.width = `95%`;
             document.getElementById('load-percentage-console').innerText = `95%`;
 
+            let finalUrl = "";
             if (pollData.unsigned_urls && pollData.unsigned_urls.length > 0) {
-              // Se o link for público, usamos ele direto
-              videoUrl = pollData.unsigned_urls[0];
+              finalUrl = pollData.unsigned_urls[0];
             } else {
-              // A MÁGICA ACONTECE AQUI: Baixando o vídeo seguro bloqueado por chave
-              document.getElementById('load-label-console').innerText = "Baixando vídeo seguro do servidor...";
-              const contentUrl = pollData.content_url || `https://openrouter.ai/api/v1/videos/${jobId}/content`;
-              
-              const videoFetch = await fetch(contentUrl, {
+              finalUrl = pollData.content_url || `https://openrouter.ai/api/v1/videos/${jobId}/content`;
+            }
+
+            // SISTEMA DE ESCAPE CONTRA CORS:
+            // Tentamos baixar como Blob para tocar local, se der erro de CORS, salvamos a URL bruta direto no botão!
+            try {
+              document.getElementById('load-label-console').innerText = "Montando buffer de reprodução...";
+              const videoFetch = await fetch(finalUrl, {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${apiKey}` }
               });
               
-              if (!videoFetch.ok) throw new Error("O vídeo foi gerado, mas ocorreu uma falha ao baixá-lo.");
+              if (!videoFetch.ok) throw new Error();
               
               const videoBlob = await videoFetch.blob();
-              videoUrl = URL.createObjectURL(videoBlob); // Cria o link direto na RAM do seu navegador!
+              videoUrl = URL.createObjectURL(videoBlob);
+            } catch (e) {
+              console.log("CORS barrou leitura interna. Link direto configurado para o botão.");
+              videoUrl = finalUrl; // Plano B: Link bruto funcional para o clique do botão
             }
           } else if (pollData.status === "failed") {
             clearInterval(progressInterval);
-            throw new Error(pollData.error || "A geração falhou internamente no Seedance.");
+            throw new Error(pollData.error || "A geração foi cancelada pelo servidor Seedance.");
           }
         }
 
-        clearInterval(progressInterval);
         document.getElementById('generation-progress-bar').style.width = `100%`;
         document.getElementById('load-percentage-console').innerText = `100%`;
-        document.getElementById('load-label-console').innerText = "Vídeo concluído!";
+        document.getElementById('load-label-console').innerText = "Finalizado!";
 
         setTimeout(() => {
           isGenerating = false;
           document.getElementById('preview-loading-state').classList.add('hidden');
           document.getElementById('preview-player-state').classList.remove('hidden');
+          document.getElementById('preview-footer-state').classList.remove('hidden'); // Ativa o painel de download
           
+          // Alimenta o botão de download
+          const downloadBtn = document.getElementById('download-action-btn');
+          downloadBtn.href = videoUrl;
+
+          // Carrega o player (se não houver bloqueio de CORS na tag)
           const player = document.getElementById('player-mock-frame');
           player.muted = true;
           player.src = videoUrl;
-          player.play();
+          try { player.play(); } catch(err) { console.log("Autoplay retido pelo navegador."); }
 
+          // Registra na galeria
           const grid = document.getElementById('gallery-grid');
           grid.innerHTML = `<div class="bg-black p-2 border border-white/5 rounded-xl"><video src="${videoUrl}" controls loop muted class="w-full h-20 object-cover rounded-lg mb-1"></video><p class="text-[10px] truncate text-white">${promptText}</p></div>` + grid.innerHTML;
-        }, 1000);
+        }, 800);
 
       } catch (error) {
         alert("Erro na IA: " + error.message);
