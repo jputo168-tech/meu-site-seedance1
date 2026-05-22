@@ -1,84 +1,64 @@
 <!DOCTYPE html>
-<html lang="pt-PT" class="dark">
+<html lang="pt-BR" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seedance Video 2.0 — Interface Oficial</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Seedance Video 2.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background-color: #030303; color: white; font-family: sans-serif; }
+    body { background-color: #030303; color: white; }
     .bg-panel { background-color: #0a0a0d; border: 1px solid #16161f; }
   </style>
 </head>
 <body class="p-6">
-  <main class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
-    
+  <main class="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
     <div class="bg-panel p-6 rounded-2xl space-y-4">
-      <h2 class="text-violet-400 font-bold text-lg">Parâmetros do Vídeo</h2>
-      <input type="password" id="api-key" class="w-full bg-black p-3 rounded-xl border border-white/10" placeholder="Digite sua chave de acesso...">
-      <textarea id="prompt" class="w-full bg-black p-3 rounded-xl border border-white/10" rows="4" placeholder="Uma majestosa águia sobrevoando desfiladeiros..."></textarea>
-      <button onclick="gerarVideo()" class="w-full py-4 bg-violet-600 rounded-xl font-bold hover:bg-violet-500 transition">GERAR VÍDEO</button>
+      <h2 class="text-violet-400 font-bold">Configurações</h2>
+      <input type="password" id="api-key" class="w-full bg-black p-3 rounded-xl border border-white/10" placeholder="Chave OpenRouter...">
+      <textarea id="prompt" class="w-full bg-black p-3 rounded-xl border border-white/10" rows="4" placeholder="Prompt..."></textarea>
+      <button onclick="gerar()" class="w-full py-4 bg-violet-600 rounded-xl font-bold">GERAR VÍDEO</button>
     </div>
-
     <div class="bg-panel p-6 rounded-2xl flex flex-col gap-4">
-      <div id="status" class="text-zinc-400 text-sm italic">Aguardando comando...</div>
-      <video id="player" class="w-full hidden rounded-xl shadow-2xl" controls></video>
-      <a id="btn-download" class="hidden w-full py-3 bg-indigo-600 text-center rounded-xl font-bold cursor-pointer hover:bg-indigo-500">BAIXAR VÍDEO MP4</a>
+      <div id="status" class="text-zinc-400 text-sm italic">Aguardando...</div>
+      <video id="player" class="w-full hidden rounded-xl" controls></video>
+      <a id="btn-download" class="hidden w-full py-3 bg-indigo-600 text-center rounded-xl font-bold cursor-pointer">BAIXAR VÍDEO</a>
     </div>
   </main>
-
   <script>
-    async function gerarVideo() {
+    async function gerar() {
       const key = document.getElementById('api-key').value;
       const prompt = document.getElementById('prompt').value;
       const status = document.getElementById('status');
       const player = document.getElementById('player');
       const btn = document.getElementById('btn-download');
-
-      if (!key || !prompt) return alert("Preencha a chave e o prompt!");
-
-      status.innerText = "A enviar pedido para a IA...";
       
+      status.innerText = "Processando...";
       try {
-        // 1. Enviar o pedido para a API de Vídeos do OpenRouter
-        const response = await fetch('https://openrouter.ai/api/v1/videos', {
+        const res = await fetch('https://openrouter.ai/api/v1/videos', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: "bytedance/seedance-2.0", prompt: prompt })
+          headers: {'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'},
+          body: JSON.stringify({model: "bytedance/seedance-2.0", prompt: prompt})
         });
-        const data = await response.json();
+        const data = await res.json();
         
-        // 2. Sistema de Polling (Perguntar até estar pronto)
         let finalUrl = null;
         while (!finalUrl) {
-          status.innerText = "Renderizando... (Verificando progresso)";
-          const poll = await fetch(`https://openrouter.ai/api/v1/videos/${data.id}`, { 
-            headers: { 'Authorization': 'Bearer ' + key } 
-          });
+          status.innerText = "Renderizando...";
+          const poll = await fetch(`https://openrouter.ai/api/v1/videos/${data.id}`, { headers: {'Authorization': 'Bearer ' + key} });
           const res = await poll.json();
-          
-          if (res.status === "completed") {
-            finalUrl = res.content_url || res.unsigned_urls[0];
-          } else {
-            await new Promise(r => setTimeout(r, 5000)); // Espera 5 segundos
-          }
+          if (res.status === "completed") finalUrl = res.content_url || res.unsigned_urls[0];
+          else await new Promise(r => setTimeout(r, 4000));
         }
-
-        // 3. Download via Blob para contornar problemas de CORS
-        status.innerText = "A descarregar ficheiro seguro...";
-        const blobReq = await fetch(finalUrl, { headers: { 'Authorization': 'Bearer ' + key } });
-        const blob = await blobReq.blob();
+        
+        const blob = await (await fetch(finalUrl, { headers: {'Authorization': 'Bearer ' + key} })).blob();
         const url = URL.createObjectURL(blob);
-
-        player.src = url;
-        player.classList.remove('hidden');
-        btn.href = url;
-        btn.classList.remove('hidden');
-        status.innerText = "Vídeo pronto!";
-      } catch (e) {
-        alert("Erro na IA: " + e.message);
-        status.innerText = "Erro.";
-      }
+        player.src = url; player.classList.remove('hidden');
+        btn.href = url; btn.classList.remove('hidden');
+        status.innerText = "Pronto!";
+      } catch (e) { alert("Erro: " + e.message); }
     }
   </script>
 </body>
