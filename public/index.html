@@ -21,16 +21,10 @@
             mono: ['JetBrains Mono', 'monospace'],
           },
           colors: {
-            brand: {
-              bg: '#030303',
-              card: '#0a0a0d',
-              border: '#16161f',
-              zinc550: '#71717a'
-            }
+            brand: { bg: '#030303', card: '#0a0a0d', border: '#16161f' }
           },
           animation: {
             'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'shimmer': 'shimmer 2s linear infinite',
           }
         }
       }
@@ -45,31 +39,16 @@
         radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
       background-attachment: fixed;
     }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 99px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 99px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-    .glow-violet:hover {
-      box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
-    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 99px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 99px; }
   </style>
 </head>
 <body class="text-zinc-100 min-h-screen font-sans antialiased flex flex-col justify-between p-4 md:p-6 custom-scrollbar">
 
   <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 rounded-2xl bg-black border border-brand-border/80 backdrop-blur-md shadow-2xl gap-4 mb-6">
     <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-indigo-600 p-[1px] flex items-center justify-center shrink-0 shadow-lg shadow-violet-950/20">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-indigo-600 p-[1px] flex items-center justify-center shrink-0 shadow-lg">
         <div class="w-full h-full bg-brand-bg rounded-[11px] flex items-center justify-center">
           <svg class="w-6 h-6 text-violet-400 animate-pulse-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -77,17 +56,10 @@
         </div>
       </div>
       <div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <h1 class="font-display text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-1.5">
-            Seedance Video <span class="text-violet-400 font-mono text-xs leading-none bg-violet-950/50 border border-violet-800/30 px-1.5 py-0.5 rounded">2.0</span>
-          </h1>
-          <span class="text-[9px] uppercase tracking-wider bg-white/5 text-zinc-400 px-2.5 py-1 rounded-full font-mono border border-white/5">
-            Seedance Engine
-          </span>
-        </div>
-        <p class="text-xs md:text-sm text-zinc-400 mt-0.5">
-          Geração de vídeos Premium com consistência espacial e câmera cinemática
-        </p>
+        <h1 class="font-display text-xl md:text-2xl font-bold text-white flex items-center gap-1.5">
+          Seedance Video <span class="text-violet-400 font-mono text-xs bg-violet-950/50 border border-violet-800/30 px-1.5 py-0.5 rounded">2.0</span>
+        </h1>
+        <p class="text-xs text-zinc-400 mt-0.5">Geração de vídeos Premium com consistência espacial</p>
       </div>
     </div>
   </header>
@@ -96,37 +68,23 @@
     
     <section class="lg:col-span-4 bg-brand-card border border-brand-border p-5 rounded-2xl flex flex-col gap-6 shadow-xl h-full">
       <div class="pb-3 border-b border-white/5">
-        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-violet-400 flex items-center gap-2">
-          Geração Avançada
-        </h2>
-      </div>
-
-      <div class="grid grid-cols-2 bg-black border border-white/5 rounded-xl p-1">
-        <button id="tab-text" class="py-2 text-xs font-semibold rounded-lg bg-zinc-900 border border-white/5 text-white">Text-to-Video</button>
-        <button id="tab-image" class="py-2 text-xs font-semibold rounded-lg text-zinc-400">Image-to-Video</button>
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-violet-400">Geração Avançada</h2>
       </div>
 
       <div id="panel-text" class="space-y-4">
         <div class="space-y-2">
-          <label class="text-xs font-semibold text-zinc-300">Prompt Cinematográfico</label>
-          <textarea id="prompt-input" rows="4" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none" placeholder="Digite seu prompt..."></textarea>
+          <label class="text-xs font-semibold text-zinc-300">Sua Chave do OpenRouter</label>
+          <input type="password" id="api-key-input" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none focus:border-violet-500/60" placeholder="sk-or-v1-..." />
         </div>
-      </div>
-
-      <div class="space-y-4 pt-2 border-t border-white/5">
+        
         <div class="space-y-2">
-          <label class="text-xs font-semibold text-zinc-300">Movimento de Câmera</label>
-          <select id="camera-motion-select" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none">
-            <option value="pan-right">Panorâmica Direita (Pan Right)</option>
-            <option value="pan-left">Panorâmica Esquerda (Pan Left)</option>
-            <option value="zoom-in">Zoom In</option>
-            <option value="zoom-out">Zoom Out</option>
-          </select>
+          <label class="text-xs font-semibold text-zinc-300">Prompt Cinematográfico</label>
+          <textarea id="prompt-input" rows="4" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none focus:border-violet-500/60" placeholder="Ex: Cyberpunk city under heavy neon-rain..."></textarea>
         </div>
       </div>
 
-      <div class="space-y-3 pt-4 border-t border-white/5 mt-auto">
-        <button id="generate-btn" onclick="startGenerationProcess()" class="w-full py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 text-white font-display font-bold text-xs rounded-xl shadow-lg uppercase cursor-pointer">
+      <div class="space-y-4 pt-2 border-t border-white/5 mt-auto">
+        <button id="generate-btn" onclick="startGenerationProcess()" class="w-full py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 text-white font-display font-bold text-xs rounded-xl shadow-lg uppercase cursor-pointer transition hover:scale-[1.02]">
           Gerar Vídeo IA
         </button>
       </div>
@@ -144,13 +102,13 @@
           </div>
 
           <div id="preview-loading-state" class="hidden w-full max-w-md text-center p-6 space-y-6">
-            <h3 class="text-sm font-semibold text-white uppercase">Compilando Vetores Latentes</h3>
+            <h3 class="text-sm font-semibold text-white uppercase">Renderizando no Seedance...</h3>
             <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden">
-              <div id="generation-progress-bar" class="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 h-full w-0 transition-all duration-300"></div>
+              <div id="generation-progress-bar" class="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 h-full w-0 transition-all duration-[1000ms]"></div>
             </div>
             <div class="flex justify-between font-mono text-[9px] text-zinc-500">
-              <span id="load-label-console">Processando na API...</span>
-              <span id="load-percentage-console">Aguarde</span>
+              <span id="load-label-console">Aguarde, vídeos demoram cerca de 1 minuto...</span>
+              <span id="load-percentage-console">0%</span>
             </div>
           </div>
 
@@ -173,51 +131,79 @@
     async function startGenerationProcess() {
       if (isGenerating) return;
       
+      const apiKey = document.getElementById('api-key-input').value.trim();
       const promptText = document.getElementById('prompt-input').value.trim();
-      if(!promptText) return alert("Digite um prompt!");
+
+      if (!apiKey) return alert("Cole sua chave do OpenRouter para gerar o vídeo!");
+      if (!promptText) return alert("Digite um prompt!");
 
       isGenerating = true;
       document.getElementById('preview-empty-state').classList.add('hidden');
       document.getElementById('preview-player-state').classList.add('hidden');
       document.getElementById('preview-loading-state').classList.remove('hidden');
 
-      // Inicia a animação da barra
-      document.getElementById('generation-progress-bar').style.width = `50%`;
+      // Barra de progresso falsa para mostrar atividade enquanto a conexão fica aberta
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        if(progress < 95) progress += 1;
+        document.getElementById('generation-progress-bar').style.width = `${progress}%`;
+        document.getElementById('load-percentage-console').innerText = `${progress}%`;
+      }, 600);
 
       try {
-        const response = await fetch('/api/gerar', {
+        // Conexão direta com o OpenRouter (Totalmente à prova de Vercel Timeout)
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            prompt: promptText,
-            cameraMotion: document.getElementById('camera-motion-select').value
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'Seedance Studio'
+          },
+          body: JSON.stringify({
+            model: "bytedance/seedance-2.0",
+            messages: [{ role: "user", content: promptText }]
           })
         });
+
+        clearInterval(progressInterval);
         
         const data = await response.json();
 
-        if(!response.ok || !data.videoUrl) throw new Error(data.error || "A API não devolveu uma URL válida.");
+        if (!response.ok) {
+          throw new Error(data.error?.message || "O OpenRouter recusou a requisição.");
+        }
+
+        const respostaTexto = data.choices?.[0]?.message?.content || "";
+        
+        // Puxa o link .mp4 que o OpenRouter devolver na mensagem
+        const videoMatch = respostaTexto.match(/https?:\/\/[^\s"']+\.mp4/);
+        const videoUrl = videoMatch ? videoMatch[0] : null;
+
+        if (!videoUrl) {
+          throw new Error("Vídeo não retornado. Resposta bruta: " + respostaTexto);
+        }
 
         document.getElementById('generation-progress-bar').style.width = `100%`;
+        document.getElementById('load-percentage-console').innerText = `100%`;
 
         setTimeout(() => {
           isGenerating = false;
           document.getElementById('preview-loading-state').classList.add('hidden');
           document.getElementById('preview-player-state').classList.remove('hidden');
           
-          // Agora sim, injetamos a URL real vinda da sua API
           const player = document.getElementById('player-mock-frame');
           player.muted = true;
-          player.src = data.videoUrl;
+          player.src = videoUrl;
           player.play();
 
-          // Adiciona na galeria
           const grid = document.getElementById('gallery-grid');
-          grid.innerHTML = `<div class="bg-black p-2 border border-white/5 rounded-xl"><video src="${data.videoUrl}" controls loop muted class="w-full h-20 object-cover rounded-lg mb-1"></video><p class="text-[10px] truncate text-white">${promptText}</p></div>` + grid.innerHTML;
-        }, 600);
+          grid.innerHTML = `<div class="bg-black p-2 border border-white/5 rounded-xl"><video src="${videoUrl}" controls loop muted class="w-full h-20 object-cover rounded-lg mb-1"></video><p class="text-[10px] truncate text-white">${promptText}</p></div>` + grid.innerHTML;
+        }, 1000);
 
       } catch (error) {
-        alert("Erro na geração real: " + error.message);
+        clearInterval(progressInterval);
+        alert("Erro na IA: " + error.message);
         isGenerating = false;
         document.getElementById('preview-loading-state').classList.add('hidden');
         document.getElementById('preview-empty-state').classList.remove('hidden');
