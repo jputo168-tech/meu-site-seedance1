@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-PT" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,7 +59,7 @@
         <h1 class="font-display text-xl md:text-2xl font-bold text-white flex items-center gap-1.5">
           Seedance Video <span class="text-violet-400 font-mono text-xs bg-violet-950/50 border border-violet-800/30 px-1.5 py-0.5 rounded">FAST</span>
         </h1>
-        <p class="text-xs text-zinc-400 mt-0.5">Geração de vídeos ultrarrápida conectada ao OpenRouter</p>
+        <p class="text-xs text-zinc-400 mt-0.5">Geração de vídeos assíncrona conectada ao OpenRouter</p>
       </div>
     </div>
   </header>
@@ -73,13 +73,13 @@
 
       <div id="panel-text" class="space-y-4">
         <div class="space-y-2">
-          <label class="text-xs font-semibold text-zinc-300">Sua Chave do OpenRouter</label>
+          <label class="text-xs font-semibold text-zinc-300">A sua Chave do OpenRouter</label>
           <input type="password" id="api-key-input" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none focus:border-violet-500/60" placeholder="sk-or-v1-..." />
         </div>
         
         <div class="space-y-2">
           <label class="text-xs font-semibold text-zinc-300">Prompt Cinematográfico</label>
-          <textarea id="prompt-input" rows="4" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none focus:border-violet-500/60" placeholder="Ex: Cyberpunk city under heavy neon-rain..."></textarea>
+          <textarea id="prompt-input" rows="4" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none focus:border-violet-500/60" placeholder="Insira o seu comando aqui...">Um único lutador a executar uma sequência de combate intensa, sem duplas, câmara a afastar lentamente, atmosfera cinematográfica de ficção científica</textarea>
         </div>
       </div>
 
@@ -102,12 +102,12 @@
           </div>
 
           <div id="preview-loading-state" class="hidden w-full max-w-md text-center p-6 space-y-6">
-            <h3 class="text-sm font-semibold text-white uppercase">Processando no Seedance Fast...</h3>
+            <h3 class="text-sm font-semibold text-white uppercase" id="loading-title">A criar o seu vídeo...</h3>
             <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden">
-              <div id="generation-progress-bar" class="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 h-full w-0 transition-all duration-[1000ms]"></div>
+              <div id="generation-progress-bar" class="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 h-full w-0 transition-all duration-[5000ms]"></div>
             </div>
             <div class="flex justify-between font-mono text-[9px] text-zinc-500">
-              <span id="load-label-console">Conectando ao provedor...</span>
+              <span id="load-label-console">A ligar ao OpenRouter...</span>
               <span id="load-percentage-console">0%</span>
             </div>
           </div>
@@ -134,8 +134,8 @@
       const apiKey = document.getElementById('api-key-input').value.trim();
       const promptText = document.getElementById('prompt-input').value.trim();
 
-      if (!apiKey) return alert("Cole sua chave do OpenRouter para gerar o vídeo!");
-      if (!promptText) return alert("Digite um prompt!");
+      if (!apiKey) return alert("Por favor, introduza a sua chave do OpenRouter!");
+      if (!promptText) return alert("Escreva um prompt!");
 
       isGenerating = true;
       document.getElementById('preview-empty-state').classList.add('hidden');
@@ -143,14 +143,13 @@
       document.getElementById('preview-loading-state').classList.remove('hidden');
 
       let progress = 0;
-      const progressInterval = setInterval(() => {
-        if(progress < 95) progress += 1;
-        document.getElementById('generation-progress-bar').style.width = `${progress}%`;
-        document.getElementById('load-percentage-console').innerText = `${progress}%`;
-      }, 300); // Aceleramos a barra porque o modelo FAST é mais rápido
+      document.getElementById('generation-progress-bar').style.width = `10%`;
+      document.getElementById('load-percentage-console').innerText = `10%`;
+      document.getElementById('load-label-console').innerText = "A enviar pedido de vídeo para a API...";
 
       try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        // Passo 1: Solicitar o vídeo à API especializada do OpenRouter
+        const response = await fetch('https://openrouter.ai/api/v1/videos', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
@@ -159,31 +158,67 @@
             'X-Title': 'Seedance Studio'
           },
           body: JSON.stringify({
-            // Mudança fundamental: Chamando a versão veloz para fugir do Erro 500
             model: "bytedance/seedance-2.0-fast",
-            messages: [{ role: "user", content: promptText }]
+            prompt: promptText
           })
         });
 
-        clearInterval(progressInterval);
-        
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error?.message || "O OpenRouter recusou a requisição (Erro " + response.status + ").");
+          throw new Error(data.error?.message || "O OpenRouter recusou o pedido (Erro " + response.status + ").");
         }
 
-        const respostaTexto = data.choices?.[0]?.message?.content || "";
+        const jobId = data.id;
+        // Recebemos o endereço para efetuar as verificações do estado do ficheiro
+        const pollingUrl = data.polling_url || `https://openrouter.ai/api/v1/videos/${jobId}`;
+
+        document.getElementById('load-label-console').innerText = "Na fila de renderização (A verificar estado...)";
+        document.getElementById('generation-progress-bar').style.width = `40%`;
+        document.getElementById('load-percentage-console').innerText = `40%`;
+
+        let videoUrl = null;
+        let isCompleted = false;
         
-        const videoMatch = respostaTexto.match(/https?:\/\/[^\s"']+\.mp4/);
-        const videoUrl = videoMatch ? videoMatch[0] : null;
+        // Simular um progresso contínuo enquanto espera
+        const progressInterval = setInterval(() => {
+          if (progress < 90) progress += 2;
+          document.getElementById('generation-progress-bar').style.width = `${progress}%`;
+          document.getElementById('load-percentage-console').innerText = `${progress}%`;
+        }, 3000);
 
-        if (!videoUrl) {
-          throw new Error("Vídeo não retornado. O servidor respondeu com: " + respostaTexto);
+        // Passo 2: Polling assíncrono (Perguntar à API se já terminou a cada 5 segundos)
+        while (!isCompleted) {
+          await new Promise(r => setTimeout(r, 5000));
+          
+          const pollResponse = await fetch(pollingUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`
+            }
+          });
+          
+          const pollData = await pollResponse.json();
+          
+          if (pollData.status === "completed") {
+            isCompleted = true;
+            if (pollData.unsigned_urls && pollData.unsigned_urls.length > 0) {
+              videoUrl = pollData.unsigned_urls[0];
+            } else if (pollData.content_url) {
+              videoUrl = pollData.content_url;
+            } else {
+              videoUrl = `https://openrouter.ai/api/v1/videos/${jobId}/content`;
+            }
+          } else if (pollData.status === "failed") {
+            clearInterval(progressInterval);
+            throw new Error(pollData.error || "A geração falhou internamente no Seedance.");
+          }
         }
 
+        clearInterval(progressInterval);
         document.getElementById('generation-progress-bar').style.width = `100%`;
         document.getElementById('load-percentage-console').innerText = `100%`;
+        document.getElementById('load-label-console').innerText = "Vídeo concluído!";
 
         setTimeout(() => {
           isGenerating = false;
@@ -200,7 +235,6 @@
         }, 1000);
 
       } catch (error) {
-        clearInterval(progressInterval);
         alert("Erro na IA: " + error.message);
         isGenerating = false;
         document.getElementById('preview-loading-state').classList.add('hidden');
