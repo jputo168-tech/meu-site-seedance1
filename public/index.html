@@ -210,7 +210,7 @@
           </div>
 
           <div id="preview-player-state" class="hidden absolute inset-0 overflow-hidden flex items-center justify-center bg-black">
-            <video id="player-mock-frame" class="w-full h-full object-contain" controls autoplay loop playsinline></video>
+            <video id="player-mock-frame" class="w-full h-full object-contain" controls autoplay loop muted playsinline></video>
           </div>
         </div>
       </div>
@@ -292,12 +292,13 @@
           document.getElementById('preview-loading-state').classList.add('hidden');
           document.getElementById('preview-player-state').classList.remove('hidden');
           
-          // Injeta a URL diretamente no player de vídeo corrigido
+          // Injeta a URL diretamente no player e força o Play com Mute
           const player = document.getElementById('player-mock-frame');
+          player.muted = true;
           player.src = data.videoUrl;
           player.play();
 
-          // Adiciona na galeria usando a tag <video> correta
+          // Adiciona na galeria
           const grid = document.getElementById('gallery-grid');
           grid.innerHTML = `<div class="bg-black p-2 border border-white/5 rounded-xl"><video src="${data.videoUrl}" controls loop muted class="w-full h-20 object-cover rounded-lg mb-1"></video><p class="text-[10px] truncate text-white">${data.promptUsado}</p></div>` + grid.innerHTML;
         }, 600);
