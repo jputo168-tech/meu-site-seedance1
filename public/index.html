@@ -57,9 +57,9 @@
       </div>
       <div>
         <h1 class="font-display text-xl md:text-2xl font-bold text-white flex items-center gap-1.5">
-          Seedance Video <span class="text-violet-400 font-mono text-xs bg-violet-950/50 border border-violet-800/30 px-1.5 py-0.5 rounded">2.0</span>
+          Seedance Video <span class="text-violet-400 font-mono text-xs bg-violet-950/50 border border-violet-800/30 px-1.5 py-0.5 rounded">FAST</span>
         </h1>
-        <p class="text-xs text-zinc-400 mt-0.5">Geração de vídeos Premium com consistência espacial</p>
+        <p class="text-xs text-zinc-400 mt-0.5">Geração de vídeos ultrarrápida conectada ao OpenRouter</p>
       </div>
     </div>
   </header>
@@ -102,12 +102,12 @@
           </div>
 
           <div id="preview-loading-state" class="hidden w-full max-w-md text-center p-6 space-y-6">
-            <h3 class="text-sm font-semibold text-white uppercase">Renderizando no Seedance...</h3>
+            <h3 class="text-sm font-semibold text-white uppercase">Processando no Seedance Fast...</h3>
             <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden">
               <div id="generation-progress-bar" class="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 h-full w-0 transition-all duration-[1000ms]"></div>
             </div>
             <div class="flex justify-between font-mono text-[9px] text-zinc-500">
-              <span id="load-label-console">Aguarde, vídeos demoram cerca de 1 minuto...</span>
+              <span id="load-label-console">Conectando ao provedor...</span>
               <span id="load-percentage-console">0%</span>
             </div>
           </div>
@@ -142,16 +142,14 @@
       document.getElementById('preview-player-state').classList.add('hidden');
       document.getElementById('preview-loading-state').classList.remove('hidden');
 
-      // Barra de progresso falsa para mostrar atividade enquanto a conexão fica aberta
       let progress = 0;
       const progressInterval = setInterval(() => {
         if(progress < 95) progress += 1;
         document.getElementById('generation-progress-bar').style.width = `${progress}%`;
         document.getElementById('load-percentage-console').innerText = `${progress}%`;
-      }, 600);
+      }, 300); // Aceleramos a barra porque o modelo FAST é mais rápido
 
       try {
-        // Conexão direta com o OpenRouter (Totalmente à prova de Vercel Timeout)
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -161,7 +159,8 @@
             'X-Title': 'Seedance Studio'
           },
           body: JSON.stringify({
-            model: "bytedance/seedance-2.0",
+            // Mudança fundamental: Chamando a versão veloz para fugir do Erro 500
+            model: "bytedance/seedance-2.0-fast",
             messages: [{ role: "user", content: promptText }]
           })
         });
@@ -171,17 +170,16 @@
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error?.message || "O OpenRouter recusou a requisição.");
+          throw new Error(data.error?.message || "O OpenRouter recusou a requisição (Erro " + response.status + ").");
         }
 
         const respostaTexto = data.choices?.[0]?.message?.content || "";
         
-        // Puxa o link .mp4 que o OpenRouter devolver na mensagem
         const videoMatch = respostaTexto.match(/https?:\/\/[^\s"']+\.mp4/);
         const videoUrl = videoMatch ? videoMatch[0] : null;
 
         if (!videoUrl) {
-          throw new Error("Vídeo não retornado. Resposta bruta: " + respostaTexto);
+          throw new Error("Vídeo não retornado. O servidor respondeu com: " + respostaTexto);
         }
 
         document.getElementById('generation-progress-bar').style.width = `100%`;
