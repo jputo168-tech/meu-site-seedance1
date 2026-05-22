@@ -118,15 +118,14 @@
           <label class="text-xs font-semibold text-zinc-300">Movimento de Câmera</label>
           <select id="camera-motion-select" class="w-full text-xs bg-black text-zinc-200 border border-white/5 rounded-xl p-3 outline-none">
             <option value="pan-right">Panorâmica Direita (Pan Right)</option>
+            <option value="pan-left">Panorâmica Esquerda (Pan Left)</option>
+            <option value="zoom-in">Zoom In</option>
+            <option value="zoom-out">Zoom Out</option>
           </select>
         </div>
       </div>
 
       <div class="space-y-3 pt-4 border-t border-white/5 mt-auto">
-        <div class="flex justify-between items-center text-[11px] text-zinc-400 font-mono">
-          <span>Consumo: <span class="text-violet-400 font-bold">10 Créditos</span></span>
-          <span>Seus Créditos: <span id="user-credits" class="text-white font-bold">140 / 150</span></span>
-        </div>
         <button id="generate-btn" onclick="startGenerationProcess()" class="w-full py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 text-white font-display font-bold text-xs rounded-xl shadow-lg uppercase cursor-pointer">
           Gerar Vídeo IA
         </button>
@@ -150,8 +149,8 @@
               <div id="generation-progress-bar" class="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 h-full w-0 transition-all duration-300"></div>
             </div>
             <div class="flex justify-between font-mono text-[9px] text-zinc-500">
-              <span id="load-label-console">Inicializando...</span>
-              <span id="load-percentage-console">0%</span>
+              <span id="load-label-console">Processando na API...</span>
+              <span id="load-percentage-console">Aguarde</span>
             </div>
           </div>
 
@@ -169,57 +168,56 @@
   </main>
 
   <script>
-    let userCredits = 140;
     let isGenerating = false;
 
     async function startGenerationProcess() {
       if (isGenerating) return;
       
-      const promptText = document.getElementById('prompt-input').value.trim() || "Teste Sem Prompt";
+      const promptText = document.getElementById('prompt-input').value.trim();
+      if(!promptText) return alert("Digite um prompt!");
 
       isGenerating = true;
       document.getElementById('preview-empty-state').classList.add('hidden');
       document.getElementById('preview-player-state').classList.add('hidden');
       document.getElementById('preview-loading-state').classList.remove('hidden');
 
-      document.getElementById('generation-progress-bar').style.width = `40%`;
-      document.getElementById('load-label-console').innerText = "Processando video...";
-      document.getElementById('load-percentage-console').innerText = `40%`;
+      // Inicia a animação da barra
+      document.getElementById('generation-progress-bar').style.width = `50%`;
 
       try {
-        // Chamamos a API só para fazer a barrinha carregar no tempo certo
-        await fetch('/api/gerar', {
+        const response = await fetch('/api/gerar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: promptText })
+          body: JSON.stringify({ 
+            prompt: promptText,
+            cameraMotion: document.getElementById('camera-motion-select').value
+          })
         });
         
+        const data = await response.json();
+
+        if(!response.ok || !data.videoUrl) throw new Error(data.error || "A API não devolveu uma URL válida.");
+
         document.getElementById('generation-progress-bar').style.width = `100%`;
-        document.getElementById('load-label-console').innerText = "Vídeo gerado!";
-        document.getElementById('load-percentage-console').innerText = `100%`;
 
         setTimeout(() => {
           isGenerating = false;
-          userCredits -= 10;
-          document.getElementById('user-credits').innerText = `${userCredits} / 150`;
           document.getElementById('preview-loading-state').classList.add('hidden');
           document.getElementById('preview-player-state').classList.remove('hidden');
           
-          // INJEÇÃO DIRETA DO VÍDEO (Ignorando a resposta bugada da Vercel)
-          const videoGarantido = "https://media.w3.org/2010/05/sintel/trailer.mp4";
-          
+          // Agora sim, injetamos a URL real vinda da sua API
           const player = document.getElementById('player-mock-frame');
           player.muted = true;
-          player.src = videoGarantido;
+          player.src = data.videoUrl;
           player.play();
 
           // Adiciona na galeria
           const grid = document.getElementById('gallery-grid');
-          grid.innerHTML = `<div class="bg-black p-2 border border-white/5 rounded-xl"><video src="${videoGarantido}" controls loop muted class="w-full h-20 object-cover rounded-lg mb-1"></video><p class="text-[10px] truncate text-white">${promptText}</p></div>` + grid.innerHTML;
+          grid.innerHTML = `<div class="bg-black p-2 border border-white/5 rounded-xl"><video src="${data.videoUrl}" controls loop muted class="w-full h-20 object-cover rounded-lg mb-1"></video><p class="text-[10px] truncate text-white">${promptText}</p></div>` + grid.innerHTML;
         }, 600);
 
       } catch (error) {
-        alert("Erro: " + error.message);
+        alert("Erro na geração real: " + error.message);
         isGenerating = false;
         document.getElementById('preview-loading-state').classList.add('hidden');
         document.getElementById('preview-empty-state').classList.remove('hidden');
