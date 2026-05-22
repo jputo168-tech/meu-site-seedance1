@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // Garante que a rota só aceita requisições do tipo POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
   }
@@ -7,15 +6,14 @@ export default async function handler(req, res) {
   try {
     const { prompt, cameraMotion, duration, aspectRatio } = req.body;
 
-    // Aguarda 2 segundos para simular a renderização da IA no painel do site
+    // Aguarda 2 segundos para a barra de progresso encher lindamente no seu site
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Retorna uma resposta estável instantaneamente eliminando o timeout
+    // Retorna uma resposta com um vídeo público do Google que nunca falha
     return res.status(200).json({
       success: true,
       promptUsado: prompt,
-      // URL estável de vídeo MP4 para o player renderizar sem quebrar
-      videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-abstract-laser-lights-background-23024-large.mp4"
+      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
     });
 
   } catch (error) {
